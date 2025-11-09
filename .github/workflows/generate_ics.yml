@@ -1,34 +1,113 @@
-name: Generate ICS for ATP Finals 2025
+import os
+import requests
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+from icalendar import Calendar, Event, Alarm
 
-on:
-  push:
-    paths:
-      - 'matches.csv'  # uruchamia workflow tylko gdy zmieni się harmonogram
-  workflow_dispatch:   # pozwala uruchomić ręcznie z GitHub UI
+# === KONFIGURACJA ===
+TOURNAMENT = "Nitto ATP Finals 2025 – Singles"
+LOCATION = "Turin, Italy"
+TIMEZONE_OFFSET = "+01:00"  # CET / Polska
+BASE_URL = "https://www.atptour.com/en/scores/current/turin/605/finals"
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# === ŚCIEŻKI ===
+base_dir = os.path.dirname(__file__)
+output_dir = os.path.join(base_dir, "output")
+os.makedirs(output_dir, exist_ok=True)
+ics_path = os.path.join(output_dir, "ATP_Finals_2025_Singles_Turin.ics")
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+# === FUNKCJA: pobiera mecze z ATP ===
+def get_matches():
+    print("🔄 Pobieranie danych z ATP...")
+    try:
+        r = requests.get(BASE_URL, timeout=15)
+        r.raise_for_status()
+    except Exception as e:
+        print(f"❌ Błąd pobierania danych z ATP: {e}")
+        return []
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
+    soup = BeautifulSoup(r.text, "html.parser")
+    matches = []
 
-    - name: Install dependencies
-      run: pip install icalendar pytz
+    # Szukamy bloków meczów
+    for match in soup.select(".scores-draw-entry-box"):
+        players = match.select(".scores-draw-entry-box-player .name")
+        time_el = match.select_one(".scores-draw-entry-box-time")
 
-    - name: Generate ICS
-      run: python generate_ics.py
+        if len(players) == 2:
+            p1 = players[0].get_text(strip=True)
+            p2 = players[1].get_text(strip=True)
+            time_text = time_el.get_text(strip=True) if time_el else "TBD"
+            matches.append((p1, p2, time_text))
+    return matches
 
-    - name: Commit and push ICS
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add ATP_Finals_2025_Singles_Turin.ics
-        git commit -m "Update ICS from GitHub Actions" || echo "No changes to commit"
-        git push
+
+# === FUNKCJA: tworzy kalendarz ICS ===
+def create_ics(matches):
+    cal = Calendar()
+    cal.add("prodid", "-//ATP Finals 2025//kgforce//")
+    cal.add("version", "2.0")
+
+    if not matches:
+        # domyślne sesje jeśli brak danych
+        for i, (session_type, hour) in enumerate([
+            ("Day Session", 13),
+            ("Evening Session", 21)
+        ]):
+            event_date = datetime(2025, 11, 9 + i // 2)
+            start = datetime(event_date.year, event_date.month, event_date.day, hour, 0)
+            end = start + timedelta(hours=3)
+
+            ev = Event()
+            ev.add("summary", f"ATP Finals 2025 Singles – {session_type} (Turin)")
+            ev.add("description", "Group Stage – ATP schedule pending")
+            ev.add("location", LOCATION)
+            ev.add("dtstart", start)
+            ev.add("dtend", end)
+            ev.add("dtstamp", datetime.now())
+            ev.add("uid", f"default-session-{i}@atpfinals2025")
+
+            alarm = Alarm()
+            alarm.add("action", "DISPLAY")
+            alarm.add("description", f"{session_type} starts soon!")
+            alarm.add("trigger", timedelta(minutes=-30))
+            ev.add_component(alarm)
+            cal.add_component(ev)
+        return cal
+
+    # Dodaj wydarzenia z ATP
+    for i, (p1, p2, time_text) in enumerate(matches):
+        summary = f"{p1} vs {p2} (Turin)"
+        date_base = datetime(2025, 11, 9 + i // 2)  # szacunkowo po kolei
+        hour = 13 if i % 2 == 0 else 21
+        start = datetime(date_base.year, date_base.month, date_base.day, hour, 0)
+        end = start + timedelta(hours=2)
+
+        ev = Event()
+        ev.add("summary", summary)
+        ev.add("description", f"{TOURNAMENT}\nScheduled: {time_text}")
+        ev.add("location", LOCATION)
+        ev.add("dtstart", start)
+        ev.add("dtend", end)
+        ev.add("dtstamp", datetime.now())
+        ev.add("uid", f"match-{i}@atpfinals2025")
+
+        alarm = Alarm()
+        alarm.add("action", "DISPLAY")
+        alarm.add("description", f"{summary} starts soon!")
+        alarm.add("trigger", timedelta(minutes=-30))
+        ev.add_component(alarm)
+
+        cal.add_component(ev)
+    return cal
+
+
+# === GŁÓWNE WYKONANIE ===
+if __name__ == "__main__":
+    matches = get_matches()
+    calendar = create_ics(matches)
+
+    with open(ics_path, "wb") as f:
+        f.write(calendar.to_ical())
+
+    print(f"✅ Plik {ics_path} zaktualizowany ({len(matches)} meczów).")
