@@ -1,14 +1,33 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+generate_ics.py — tworzy kalendarz ICS dla Nitto ATP Finals 2025 (Turin)
+Automatycznie wybiera aktualny dzień turnieju, ustawia strefę czasową CET (Polska),
+i dodaje godziny meczów w lokalnym czasie.
+Fallback: sesje domyślne, jeśli brak danych JSON.
+"""
+
 import os
 import requests
-from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from icalendar import Calendar, Event, Alarm
+from icalendar import Calendar, Event, Alarm, vDatetime
+import pytz
 
 # === KONFIGURACJA ===
 TOURNAMENT = "Nitto ATP Finals 2025 – Singles"
 LOCATION = "Turin, Italy"
-TIMEZONE_OFFSET = "+01:00"  # CET / Polska
-BASE_URL = "https://www.atptour.com/en/scores/current/turin/605/finals"
+TOURNAMENT_START = datetime(2025, 11, 9)
+TOURNAMENT_END = datetime(2025, 11, 16)
+
+TIMEZONE = pytz.timezone("Europe/Warsaw")  # CET/Polska
+
+BASE_URL_TEMPLATE = "https://www.atptour.com/en/scores/current/nitto-atp-finals/605/daily-schedule?day={day}"
+POSSIBLE_JSON_URLS_TEMPLATE = [
+    "https://www.atptour.com/-/media/json/scores/2025/605/schedule.json",
+    "https://www.atptour.com/en/-/media/json/scores/current/605/schedule.json",
+    "https://www.atptour.com/en/-/media/json/scores/current/nitto-atp-finals/schedule.json",
+]
 
 # === ŚCIEŻKI ===
 base_dir = os.path.dirname(__file__)
@@ -16,55 +35,66 @@ output_dir = os.path.join(base_dir, "output")
 os.makedirs(output_dir, exist_ok=True)
 ics_path = os.path.join(output_dir, "ATP_Finals_2025_Singles_Turin.ics")
 
-# === FUNKCJA: pobiera mecze z ATP ===
-def get_matches():
-    print("🔄 Pobieranie danych z ATP...")
-    try:
-        r = requests.get(BASE_URL, timeout=15)
-        r.raise_for_status()
-    except Exception as e:
-        print(f"❌ Błąd pobierania danych z ATP: {e}")
-        return []
 
-    soup = BeautifulSoup(r.text, "html.parser")
-    matches = []
-
-    # Szukamy bloków meczów
-    for match in soup.select(".scores-draw-entry-box"):
-        players = match.select(".scores-draw-entry-box-player .name")
-        time_el = match.select_one(".scores-draw-entry-box-time")
-
-        if len(players) == 2:
-            p1 = players[0].get_text(strip=True)
-            p2 = players[1].get_text(strip=True)
-            time_text = time_el.get_text(strip=True) if time_el else "TBD"
-            matches.append((p1, p2, time_text))
-    return matches
+# === Funkcja: oblicza dzień turnieju na podstawie dzisiejszej daty ===
+def get_current_day():
+    today = datetime.now(TIMEZONE)
+    if TOURNAMENT_START <= today <= TOURNAMENT_END:
+        day_number = (today - TOURNAMENT_START).days + 1
+        print(f"📅 Dzisiaj jest dzień {day_number} turnieju.")
+        return day_number
+    print("⚠️ Dzisiejsza data poza dniami turnieju. Używam dnia 1 jako domyślnego.")
+    return 1
 
 
-# === FUNKCJA: tworzy kalendarz ICS ===
+# === Funkcja: pobiera mecze z JSON (jeśli istnieje) ===
+def get_matches_from_json():
+    for url in POSSIBLE_JSON_URLS_TEMPLATE:
+        print(f"🔍 Próba pobrania JSON: {url}")
+        try:
+            r = requests.get(url, timeout=10)
+            if r.status_code == 200 and "application/json" in r.headers.get("Content-Type", ""):
+                data = r.json()
+                matches = []
+
+                for day in data.get("Days", []):
+                    for match in day.get("Matches", []):
+                        p1 = match.get("Player1", {}).get("Name") or "TBD"
+                        p2 = match.get("Player2", {}).get("Name") or "TBD"
+                        time_text = match.get("StartTime") or day.get("Day")
+                        matches.append((p1, p2, time_text))
+                if matches:
+                    print(f"✅ Znaleziono {len(matches)} meczów w JSON.")
+                    return matches
+        except Exception as e:
+            print(f"⚠️ Nie udało się pobrać z {url}: {e}")
+    print("❌ Nie znaleziono poprawnego JSON-a z danymi.")
+    return []
+
+
+# === Funkcja: tworzy kalendarz ICS z CET ===
 def create_ics(matches):
     cal = Calendar()
     cal.add("prodid", "-//ATP Finals 2025//kgforce//")
     cal.add("version", "2.0")
 
     if not matches:
-        # domyślne sesje jeśli brak danych
+        print("⚙️ Tworzenie kalendarza z domyślnymi sesjami (fallback).")
         for i, (session_type, hour) in enumerate([
             ("Day Session", 13),
-            ("Evening Session", 21)
-        ]):
-            event_date = datetime(2025, 11, 9 + i // 2)
-            start = datetime(event_date.year, event_date.month, event_date.day, hour, 0)
+            ("Evening Session", 21),
+        ] * ((TOURNAMENT_END - TOURNAMENT_START).days + 1)):
+            event_date = TOURNAMENT_START + timedelta(days=i // 2)
+            start = TIMEZONE.localize(event_date.replace(hour=hour, minute=0))
             end = start + timedelta(hours=3)
 
             ev = Event()
             ev.add("summary", f"ATP Finals 2025 Singles – {session_type} (Turin)")
             ev.add("description", "Group Stage – ATP schedule pending")
             ev.add("location", LOCATION)
-            ev.add("dtstart", start)
-            ev.add("dtend", end)
-            ev.add("dtstamp", datetime.now())
+            ev.add("dtstart", vDatetime(start))
+            ev.add("dtend", vDatetime(end))
+            ev.add("dtstamp", vDatetime(datetime.now(TIMEZONE)))
             ev.add("uid", f"default-session-{i}@atpfinals2025")
 
             alarm = Alarm()
@@ -75,21 +105,31 @@ def create_ics(matches):
             cal.add_component(ev)
         return cal
 
-    # Dodaj wydarzenia z ATP
+    # Jeśli są mecze z JSON
     for i, (p1, p2, time_text) in enumerate(matches):
         summary = f"{p1} vs {p2} (Turin)"
-        date_base = datetime(2025, 11, 9 + i // 2)  # szacunkowo po kolei
-        hour = 13 if i % 2 == 0 else 21
-        start = datetime(date_base.year, date_base.month, date_base.day, hour, 0)
-        end = start + timedelta(hours=2)
+
+        # Próba sparsowania czasu meczu, jeśli podany w formacie HH:MM
+        hour, minute = (13, 0)  # domyślnie Day Session
+        try:
+            if ":" in time_text:
+                h, m = map(int, time_text.split(":"))
+                hour, minute = h, m
+            elif time_text.upper() in ["TBD", ""]:
+                hour, minute = (13, 0)
+        except:
+            hour, minute = (13, 0)
+
+        start_guess = TIMEZONE.localize(datetime(2025, 11, 9 + i // 2, hour, minute))
+        end_guess = start_guess + timedelta(hours=2)
 
         ev = Event()
         ev.add("summary", summary)
         ev.add("description", f"{TOURNAMENT}\nScheduled: {time_text}")
         ev.add("location", LOCATION)
-        ev.add("dtstart", start)
-        ev.add("dtend", end)
-        ev.add("dtstamp", datetime.now())
+        ev.add("dtstart", vDatetime(start_guess))
+        ev.add("dtend", vDatetime(end_guess))
+        ev.add("dtstamp", vDatetime(datetime.now(TIMEZONE)))
         ev.add("uid", f"match-{i}@atpfinals2025")
 
         alarm = Alarm()
@@ -97,17 +137,21 @@ def create_ics(matches):
         alarm.add("description", f"{summary} starts soon!")
         alarm.add("trigger", timedelta(minutes=-30))
         ev.add_component(alarm)
-
         cal.add_component(ev)
+
     return cal
 
 
-# === GŁÓWNE WYKONANIE ===
+# === Główne wykonanie ===
 if __name__ == "__main__":
-    matches = get_matches()
+    current_day = get_current_day()
+    base_url_html = BASE_URL_TEMPLATE.format(day=current_day)
+
+    print(f"🔄 Generowanie kalendarza ATP Finals 2025 ({LOCATION}) dla dnia {current_day}")
+    matches = get_matches_from_json()
     calendar = create_ics(matches)
 
     with open(ics_path, "wb") as f:
         f.write(calendar.to_ical())
 
-    print(f"✅ Plik {ics_path} zaktualizowany ({len(matches)} meczów).")
+    print(f"✅ Plik {ics_path} zapisany ({len(matches)} meczów wczytano).")
