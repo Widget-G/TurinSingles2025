@@ -3,7 +3,7 @@ name: Auto Update ATP Finals 2025 ICS
 on:
   schedule:
     - cron: "0 */6 * * *"  # ⏰ co 6 godzin
-  workflow_dispatch:       # ➕ ręczne uruchomienie
+  workflow_dispatch:       # ➕ możliwość uruchomienia ręcznie
 
 jobs:
   update-ics:
@@ -25,28 +25,18 @@ jobs:
 
       - name: Generate updated ICS
         run: |
-          echo "🔄 Generowanie nowego pliku ATP Finals 2025..."
           python generate_ics.py
-
-      - name: Test ICS file
-        run: |
-          if [ ! -f output/ATP_Finals_2025_Singles_Turin.ics ]; then
-            echo "❌ Plik ICS nie został wygenerowany!"
-            exit 1
-          else
-            echo "✅ Plik ICS wygenerowany poprawnie."
-          fi
 
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add output/ATP_Finals_2025_Singles_Turin.ics || echo "⚠️ Brak zmian do dodania"
-          git commit -m "Auto-update ATP Finals 2025 schedule" --allow-empty || echo "⚠️ Brak zmian do commitowania"
+          git commit -m "Auto-update ATP Finals 2025 schedule" || echo "⚠️ Brak zmian do commitowania"
           git push || echo "✅ Repozytorium jest aktualne"
 
       - name: Send Push Notification (ntfy)
-        if: success()  # tylko jeśli wszystko poszło dobrze
+        if: success()
         run: |
           curl -H "Title: 🎾 ATP Finals 2025 Update" \
                -H "Priority: 4" \
