@@ -1,28 +1,16 @@
 date,start_time,end_time,player1,player2,session
-2025-11-09,15:00,17:00,Sinner,Alcaraz,Afternoon
-2025-11-09,17:00,18:00,Tsitsipas,Medvedev,Afternoon
-2025-11-09,19:00,20:30,Djokovic,Rune,Evening
-2025-11-09,20:30,22:00,Zverev,Hurkacz,Evening
-2025-11-10,15:00,17:00,Federer,Nadal,Afternoon
-2025-11-10,17:00,18:00,Shapovalov,Khachanov,Afternoon
-2025-11-10,19:00,20:30,Berrettini,Auger-Aliassime,Evening
-2025-11-10,20:30,22:00,Carreno Busta,Monfils,Evening
-2025-11-11,15:00,17:00,Sinner,Tsitsipas,Afternoon
-2025-11-11,17:00,18:00,Alcaraz,Medvedev,Afternoon
-2025-11-11,19:00,20:30,Djokovic,Zverev,Evening
-2025-11-11,20:30,22:00,Rune,Hurkacz,Evening
-2025-11-12,15:00,17:00,Federer,Shapovalov,Afternoon
-2025-11-12,17:00,18:00,Nadal,Khachanov,Afternoon
-2025-11-12,19:00,20:30,Berrettini,Carreno Busta,Evening
-2025-11-12,20:30,22:00,Auger-Aliassime,Monfils,Evening
-2025-11-13,15:00,17:00,Sinner,Alcaraz,Afternoon
-2025-11-13,17:00,18:00,Tsitsipas,Medvedev,Afternoon
-2025-11-13,19:00,20:30,Djokovic,Rune,Evening
-2025-11-13,20:30,22:00,Zverev,Hurkacz,Evening
-2025-11-14,15:00,17:00,Federer,Nadal,Afternoon
-2025-11-14,17:00,18:00,Shapovalov,Khachanov,Afternoon
-2025-11-14,19:00,20:30,Berrettini,Auger-Aliassime,Evening
-2025-11-14,20:30,22:00,Carreno Busta,Monfils,Evening
+2025-11-09,14:00,16:30,Carlos Alcaraz,Alex de Minaur,Afternoon
+2025-11-09,20:30,23:00,Alexander Zverev,Ben Shelton,Evening
+2025-11-10,14:00,16:30,Fritz,Musetti,Afternoon
+2025-11-10,20:30,23:00,Sinner,Auger-Aliassime,Evening
+2025-11-11,14:00,16:30,Alcaraz,Fritz,Afternoon
+2025-11-11,20:30,23:00,Musetti,de Minaur,Evening
+2025-11-12,14:00,16:30,Federer,Shapovalov,Afternoon
+2025-11-12,20:30,23:00,Auger-Aliassime,Monfils,Evening
+2025-11-13,14:00,16:30,Sinner,Alcaraz,Afternoon
+2025-11-13,20:30,23:00,Zverev,Hurkacz,Evening
+2025-11-14,14:00,16:30,Federer,Nadal,Afternoon
+2025-11-14,20:30,23:00,Carreno Busta,Monfils,Evening
 2025-11-15,18:00,20:00,Semi1Player1,Semi1Player2,Evening
 2025-11-15,20:00,22:00,Semi2Player1,Semi2Player2,Evening
 2025-11-16,19:00,21:30,FinalPlayer1,FinalPlayer2,Evening
