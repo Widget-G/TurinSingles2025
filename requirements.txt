@@ -1,3 +1,4 @@
 requests
 icalendar
 python-dateutil
+beautifulsoup4
