@@ -1,47 +1,48 @@
 name: Auto Update ATP Finals 2025 ICS
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"  # ⏰ co 6 godzin
-  workflow_dispatch:       # ➕ możliwość uruchomienia ręcznie
+    - cron: '0 0 * * *' # Codzienna aktualizacja (możesz zmienić na odpowiednią częstotliwość)
 
 jobs:
   update-ics:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install icalendar requests beautifulsoup4 pytz
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
 
-      - name: Generate updated ICS
-        run: |
-          python generate_ics.py
+    - name: Generate updated ICS
+      run: |
+        python generate_ics.py  # lub Twój skrypt do generowania pliku .ics
 
-- name: Commit and push changes
-  run: |
-    git config --global user.name "github-actions[bot]"
-    git config --global user.email "github-actions[bot]@users.noreply.github.com"
-    git add .
-    git commit -m "Auto-update ATP Finals 2025 schedule" || echo "⚠️ Brak zmian do commitowania"
-    git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Widget-G/TurinSingles2025.git
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Commit and push changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        git commit -m "Auto-update ATP Finals 2025 schedule" || echo "⚠️ Brak zmian do commitowania"
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Widget-G/TurinSingles2025.git
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Send Push Notification (ntfy)
-        if: success()
-        run: |
-          curl -H "Title: 🎾 ATP Finals 2025 Update" \
-               -H "Priority: 4" \
-               -H "Tags: tennis,calendar,rocket" \
-               -d "Nowy plan meczów został opublikowany i Twój kalendarz .ics został zaktualizowany! 📅" \
-               https://ntfy.sh/kgforce_atp2025
+    - name: Send Push Notification (ntfy)
+      run: |
+        curl -H "Title: 🎾 ATP Finals 2025 Update" \
+             -H "Priority: 4" \
+             -H "Tags: tennis,calendar,rocket" \
+             -d "Nowy plan meczów został opublikowany i Twój kalendarz .ics został zaktualizowany! 📅" \
+             https://ntfy.sh/kgforce_atp2025
+
+    - name: Post job cleanup
+      run: echo "Cleaning up orphan processes"
