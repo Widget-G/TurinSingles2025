@@ -1,0 +1,8 @@
+# Ignorowanie plików macOS
+.DS_Store
+
+# Inne pliki tymczasowe
+*.log
+output/
+
+
