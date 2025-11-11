@@ -1,16 +1,16 @@
 date,start_time,end_time,player1,player2,session
-2025-11-09,14:00,16:30,Carlos Alcaraz,Alex de Minaur,Afternoon
-2025-11-09,20:30,23:00,Alexander Zverev,Ben Shelton,Evening
-2025-11-10,14:00,16:30,Fritz,Musetti,Afternoon
-2025-11-10,20:30,23:00,Sinner,Auger-Aliassime,Evening
-2025-11-11,14:00,16:30,Alcaraz,Fritz,Afternoon
-2025-11-11,20:30,23:00,Musetti,de Minaur,Evening
-2025-11-12,14:00,16:30,Federer,Shapovalov,Afternoon
-2025-11-12,20:30,23:00,Auger-Aliassime,Monfils,Evening
-2025-11-13,14:00,16:30,Sinner,Alcaraz,Afternoon
-2025-11-13,20:30,23:00,Zverev,Hurkacz,Evening
-2025-11-14,14:00,16:30,Federer,Nadal,Afternoon
-2025-11-14,20:30,23:00,Carreno Busta,Monfils,Evening
+2025-11-09,14:00,16:30,Carlos Alcaraz(W),Alex de Minaur,Afternoon
+2025-11-09,20:30,23:00,Alexander Zverev(W),Ben Shelton,Evening
+2025-11-10,14:00,16:30,T.Fritz(W),L.Musetti,Afternoon
+2025-11-10,20:30,23:00,J.Sinner(W),F.Auger-Aliassime,Evening
+2025-11-11,14:00,16:30,C.Alcaraz(W),Fritz,Afternoon
+2025-11-11,20:30,23:00,Lorenzo MUSETTI(ITA)[9],Alex DE MINAUR(AUS)[7],Evening
+2025-11-12,14:00,16:30,Ben SHELTON(USA)[5]Felix AUGER-ALIASSIME(CAN)[8],Afternoon
+2025-11-12,20:30,23:00,Jannik SINNER(ITA)[2],Alexander ZVEREV(GER)[3],Evening
+2025-11-13,14:00,16:30,XXXXXX,XXXXXX,Afternoon
+2025-11-13,20:30,23:00,XXXXXX,XXXXXX,Evening
+2025-11-14,14:00,16:30,XXXXXX,XXXXXX,Afternoon
+2025-11-14,20:30,23:00,XXXXXX,XXXXXX,Evening
 2025-11-15,18:00,20:00,Semi1Player1,Semi1Player2,Evening
 2025-11-15,20:00,22:00,Semi2Player1,Semi2Player2,Evening
 2025-11-16,19:00,21:30,FinalPlayer1,FinalPlayer2,Evening
